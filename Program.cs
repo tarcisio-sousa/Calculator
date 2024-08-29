@@ -1,13 +1,21 @@
-﻿namespace Calculator
+﻿using Calculator.Contracts;
+using Calculator.Enums;
+using Calculator.Models;
+
+namespace Calculator
 {
     public class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
-            Menu();
+            while (true)
+            {
+                DisplayMenu();
+                OperatorSelection();
+            }
         }
 
-        static void Menu()
+        private static void DisplayMenu()
         {
             Console.Clear();
 
@@ -21,111 +29,74 @@
             Console.WriteLine("-------------------");
 
             Console.Write("Select option: ");
-            try
+        }
+
+        private static void OperatorSelection()
+        {
+            if (TryGetOption(out EOptionType option))
             {
-                var option = short.Parse(Console.ReadLine()!);
-                SelectOption(option);
+                if (option == EOptionType.Exit)
+                {
+                    Environment.Exit(0);
+                }
+
+                var (v1, v2) = GetOperands();
+
+                var @operator = SelectOption(option, v1, v2);
+
+                DisplayResult(@operator);
             }
-            catch (ArgumentOutOfRangeException exception)
+            else
             {
-                Console.WriteLine(exception.Message);
+                DisplayInvalidOptionMessage();
             }
-            finally
+        }
+
+        private static void DisplayResult(IOperation? @operator)
+        {
+            if (@operator != null)
             {
+                Console.Write($"Result: {@operator.Calculate()}");
                 Console.ReadKey();
-                Menu();
             }
         }
 
-        static void SelectOption(short option)
+        private static void DisplayInvalidOptionMessage()
         {
-            switch (option)
-            {
-                case 1:
-                    Sum();
-                    break;
-                case 2:
-                    Subtraction();
-                    break;
-                case 3:
-                    Multiplication();
-                    break;
-                case 4:
-                    Division();
-                    break;
-                case 5:
-                    System.Environment.Exit(0);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(option), $"Not expected option value: {option}");
-            }
+            Console.WriteLine("Invalid input. Please enter a valid option.");
+            Console.ReadKey();
         }
 
-        static void Sum()
+        private static bool TryGetOption(out EOptionType option)
+        {
+            return Enum.TryParse(Console.ReadLine(), out option) && Enum.IsDefined(typeof(EOptionType), option);
+        }
+
+        private static IOperation? SelectOption(EOptionType option, float v1, float v2) => option switch
+        {
+            EOptionType.Sum => new Sum(v1, v2),
+            EOptionType.Subtraction => new Subtraction(v1, v2),
+            EOptionType.Division => new Division(v1, v2),
+            EOptionType.Multiplication => new Multiplication(v1, v2),
+            _ => null
+        };
+
+        private static (float, float) GetOperands()
         {
             Console.Clear();
 
-            Console.Write("First value: ");
-            var v1 = float.Parse(Console.ReadLine()!);
+            var v1 = GetOperand("First value: ");
 
-            Console.Write("Second value: ");
-            var v2 = float.Parse(Console.ReadLine()!);
+            var v2 = GetOperand("Second value: ");
 
-            Console.WriteLine("");
-
-            var result = v1 + v2;
-
-            Console.Write($"The result of the sum is {result}");
+            return (v1, v2);
         }
 
-        static void Subtraction()
+        private static float GetOperand(string prompt)
         {
-            Console.Clear();
+            Console.Write(prompt);
 
-            Console.Write("First value: ");
-            var v1 = float.Parse(Console.ReadLine()!);
-
-            Console.Write("Second value: ");
-            var v2 = float.Parse(Console.ReadLine()!);
-
-            Console.WriteLine("");
-
-            var result = v1 - v2;
-
-            Console.Write($"The result of the subtraction is {result}");
-        }
-
-        static void Division()
-        {
-            Console.Clear();
-
-            Console.Write("First value: ");
-            var v1 = float.Parse(Console.ReadLine()!);
-
-            Console.Write("Second value: ");
-            var v2 = float.Parse(Console.ReadLine()!);
-
-            Console.WriteLine("");
-
-            var result = v1 / v2;
-            Console.WriteLine($"The result of the division is {result}");
-        }
-
-        static void Multiplication()
-        {
-            Console.Clear();
-
-            Console.Write("First value: ");
-            var v1 = float.Parse(Console.ReadLine()!);
-
-            Console.Write("Second value: ");
-            var v2 = float.Parse(Console.ReadLine()!);
-
-            Console.WriteLine("");
-
-            var result = v1 * v2;
-
-            Console.WriteLine($"The result of the multiplication is {result}");
+            return float.Parse(Console.ReadLine()!);
         }
     }
 }
